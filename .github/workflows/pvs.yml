@@ -28,10 +28,8 @@ jobs:
         run: dotnet build SimpleCalc.sln --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test CalculatorApp.Tests/CalculatorApp.Tests.csproj \
-          --configuration Release \
-          --no-build \
-          --verbosity normal
+        run: |
+          dotnet test CalculatorApp.Tests/CalculatorApp.Tests.csproj --configuration Release --no-build --verbosity normal
 
       - name: Download and extract PVS-Studio
         run: |
@@ -45,10 +43,7 @@ jobs:
           $PVS_DIR/bin/pvs-studio-analyzer analyze \
             --output-file=pvs-report.log \
             -- msbuild SimpleCalc.sln /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false
-          $PVS_DIR/bin/plog-converter \
-            -t errorfile \
-            -o pvs-errorfile.txt \
-            pvs-report.log
+          $PVS_DIR/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
 
       - name: Upload PVS-Studio reports
         uses: actions/upload-artifact@v4
