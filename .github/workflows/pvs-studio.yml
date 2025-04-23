@@ -1,4 +1,4 @@
-﻿name: PVS-Studio Code Analysis
+﻿name: PVS-Studio Analysis
 
 on:
   push:
@@ -9,37 +9,36 @@ on:
       - '**'
 
 jobs:
-  pvs-studio:
+  pvs-studio-analysis:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install prerequisites
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt update
+          sudo apt install -y wget unzip
 
-      - name: Install PVS-Studio
+      - name: Download PVS-Studio
         run: |
-          wget -q https://cdn.pvs-studio.com/pvs-studio-latest.deb
-          sudo dpkg -i pvs-studio-latest.deb
-          sudo apt-get install -f
+          wget https://files.viva64.com/pvs-studio-latest.tgz
+          tar -xzf pvs-studio-latest.tgz
 
-      - name: Build and Analyze with PVS-Studio
+      - name: Build the project
+        run: dotnet build
+
+      - name: Run PVS-Studio analyzer
         run: |
-          mkdir build && cd build
-          cmake ..
-          pvs-studio-analyzer trace -- make -j4
-          pvs-studio-analyzer analyze -j2 -l ../PVS-Studio.lic -o PVS-Studio.log --disableLicenseExpirationCheck
+          ./pvs-studio/bin/plog-converter --help
+          ./pvs-studio/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
+          ./pvs-studio/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
 
-      - name: Convert PVS-Studio Report
-        run: |
-          plog-converter -t html -o PVS-Studio.html PVS-Studio.log
-
-      - name: Upload PVS-Studio Report
+      - name: Upload PVS-Studio report
         uses: actions/upload-artifact@v4
         with:
-          name: pvs-studio-report
-          path: PVS-Studio.html
+          name: pvs-report
+          path: |
+            pvs-report.log
+            pvs-errorfile.txt
