@@ -1,4 +1,4 @@
-﻿name: PVS-Studio Analysis
+﻿name: CI with PVS-Studio
 
 on:
   push:
@@ -9,13 +9,14 @@ on:
       - '**'
 
 jobs:
-  pvs-studio-analysis:
+  build-test-and-analyze:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -28,20 +29,18 @@ jobs:
           wget https://files.viva64.com/pvs-studio-latest.tgz
           tar -xzf pvs-studio-latest.tgz
 
-      - name: Install PVS-Studio
-        run: |
-          # Переходим в точную папку распаковки
-          cd pvs-studio-*-x86_64
-          sudo ./install.sh
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
 
-      - name: Build project
-        run: dotnet build --no-restore
+      - name: Run unit tests
+        run: dotnet test --no-build --verbosity normal
 
-      - name: Run PVS-Studio analysis
+      - name: Run PVS-Studio analysis (no install)
         run: |
-          # если install.sh корректно установил pvs-studio-analyzer в PATH
-          pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
-          plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
+          PVS_DIR=$(echo pvs-studio-*-x86_64)
+          echo "Using PVS-Studio from $PVS_DIR"
+          $PVS_DIR/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build --configuration Release
+          $PVS_DIR/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
 
       - name: Upload PVS-Studio reports
         uses: actions/upload-artifact@v4
