@@ -1,0 +1,45 @@
+﻿name: PVS-Studio Code Analysis
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  pvs-studio:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install PVS-Studio
+        run: |
+          wget -q https://cdn.pvs-studio.com/pvs-studio-latest.deb
+          sudo dpkg -i pvs-studio-latest.deb
+          sudo apt-get install -f
+
+      - name: Build and Analyze with PVS-Studio
+        run: |
+          mkdir build && cd build
+          cmake ..
+          pvs-studio-analyzer trace -- make -j4
+          pvs-studio-analyzer analyze -j2 -l ../PVS-Studio.lic -o PVS-Studio.log --disableLicenseExpirationCheck
+
+      - name: Convert PVS-Studio Report
+        run: |
+          plog-converter -t html -o PVS-Studio.html PVS-Studio.log
+
+      - name: Upload PVS-Studio Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: pvs-studio-report
+          path: PVS-Studio.html
