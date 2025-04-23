@@ -1,0 +1,43 @@
+﻿name: PVS-Studio Analysis
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  pvs-studio-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y wget unzip
+
+      - name: Download PVS-Studio
+        run: |
+          wget https://files.viva64.com/pvs-studio-latest.tgz
+          tar -xzf pvs-studio-latest.tgz
+
+      - name: Build the project
+        run: dotnet build
+
+      - name: Run PVS-Studio analyzer
+        run: |
+          ./pvs-studio/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
+          ./pvs-studio/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
+
+      - name: Upload PVS-Studio report
+        uses: actions/upload-artifact@v3
+        with:
+          name: pvs-report
+          path: |
+            pvs-report.log
+            pvs-errorfile.txt

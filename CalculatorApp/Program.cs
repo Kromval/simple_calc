@@ -1,5 +1,5 @@
 ﻿using System;
-
+// This is a free license
 namespace CalculatorApp
 {
     class Program

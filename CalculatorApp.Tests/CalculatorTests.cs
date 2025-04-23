@@ -1,6 +1,6 @@
 ﻿using Xunit;
 using CalculatorApp;
-
+// This is a free license...
 namespace CalculatorApp.Tests
 {
     public class CalculatorTests
