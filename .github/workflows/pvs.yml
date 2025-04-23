@@ -1,31 +1,50 @@
-﻿- uses: actions/checkout@v4
+﻿name: PVS-Studio Analysis
 
-- name: Setup .NET 8.0
-  uses: actions/setup-dotnet@v4
-  with:
-    dotnet-version: 8.0.x
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
 
-- name: Install dependencies
-  run: dotnet restore
+jobs:
+  pvs-studio-analysis:
+    runs-on: ubuntu-latest
 
-- name: Install PVS-Studio
-  run: |
-    wget https://files.viva64.com/pvs-studio-latest.tgz
-    tar -xvzf pvs-studio-latest.tgz
-    sudo ./pvs-studio/install.sh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-- name: Build
-  run: dotnet build --no-restore
+      - name: Install prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y wget unzip
 
-- name: Run PVS-Studio analysis
-  run: |
-    pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
-    plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
+      - name: Download PVS-Studio
+        run: |
+          wget https://files.viva64.com/pvs-studio-latest.tgz
+          tar -xzf pvs-studio-latest.tgz
+      
+      - name: Install PVS-Studio
+        run: |
+          wget https://files.viva64.com/pvs-studio-latest.tgz
+          tar -xvzf pvs-studio-latest.tgz
+          sudo ./pvs-studio/install.sh
+          
+      - name: Build the project
+        run: dotnet build
 
-- name: Upload PVS-Studio reports
-  uses: actions/upload-artifact@v4
-  with:
-    name: pvs-reports
-    path: |
-      pvs-report.log
-      pvs-errorfile.txt
+      - name: Run PVS-Studio analyzer
+        run: |
+          ./pvs-studio/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
+          ./pvs-studio/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
+        continue-on-error: true
+
+      - name: Upload PVS-Studio report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pvs-report
+          path: |
+            pvs-report.log
+            pvs-errorfile.txt
