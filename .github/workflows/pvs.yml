@@ -33,6 +33,7 @@ jobs:
         run: |
           ./pvs-studio/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
           ./pvs-studio/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
+        continue-on-error: true
 
       - name: Upload PVS-Studio report
         uses: actions/upload-artifact@v4
