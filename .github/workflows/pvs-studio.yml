@@ -22,11 +22,6 @@ jobs:
             https://files.pvs-studio.com/etc/viva64.list
           sudo apt update
           sudo apt install pvs-studio
-          pvs-studio-analyzer credentials ${{ secrets.PVS_STUDIO_CREDENTIALS }}
-      - name: Build
-        run: |
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=On -B build .
-          cmake --build build -j
       - name: Analyze
         run: |
           pvs-studio-analyzer analyze -f build/compile_commands.json -j
