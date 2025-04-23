@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -39,7 +39,7 @@ jobs:
           plog-converter -t html -o PVS-Studio.html PVS-Studio.log
 
       - name: Upload PVS-Studio Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pvs-studio-report
           path: PVS-Studio.html
