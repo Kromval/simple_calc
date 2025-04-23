@@ -11,40 +11,42 @@ on:
 jobs:
   pvs-studio-analysis:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install prerequisites
-        run: |
-          sudo apt update
-          sudo apt install -y wget unzip
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-      - name: Download PVS-Studio
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Download and extract PVS-Studio
         run: |
           wget https://files.viva64.com/pvs-studio-latest.tgz
           tar -xzf pvs-studio-latest.tgz
-      
+
       - name: Install PVS-Studio
         run: |
-          wget https://files.viva64.com/pvs-studio-latest.tgz
-          tar -xvzf pvs-studio-latest.tgz
-          sudo ./pvs-studio/install.sh
-          
-      - name: Build the project
-        run: dotnet build
+          # Переходим в точную папку распаковки
+          cd pvs-studio-*-x86_64
+          sudo ./install.sh
 
-      - name: Run PVS-Studio analyzer
+      - name: Build project
+        run: dotnet build --no-restore
+
+      - name: Run PVS-Studio analysis
         run: |
-          ./pvs-studio/bin/pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
-          ./pvs-studio/bin/plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
-        continue-on-error: true
+          # если install.sh корректно установил pvs-studio-analyzer в PATH
+          pvs-studio-analyzer analyze -o pvs-report.log -- dotnet build
+          plog-converter -t errorfile -o pvs-errorfile.txt pvs-report.log
 
-      - name: Upload PVS-Studio report
+      - name: Upload PVS-Studio reports
         uses: actions/upload-artifact@v4
         with:
-          name: pvs-report
+          name: pvs-reports
           path: |
             pvs-report.log
             pvs-errorfile.txt
